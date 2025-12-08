@@ -1,0 +1,12 @@
+/vendor/
+/.idea/
+/.vscode/
+/.phpunit.result.cache
+/.phpstan/
+/node_modules/
+/build/
+*.log
+.DS_Store
+Thumbs.db
+.docusaurus
+

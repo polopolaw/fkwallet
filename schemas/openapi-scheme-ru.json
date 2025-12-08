@@ -1,0 +1,1458 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Схема API",
+        "description": "### Общие сведения\n\nДля начала работы, необходимо получить API ключи в личном кабинете [https://fkwallet.io/personal/settings/api-key](https://fkwallet.io/personal/settings/api-key)\n\nAPI для запросов: `https://api.fkwallet.io/v1/`\n\n### Авторизация\n\nС каждым запросом необходимо передавать публичный API ключ и заголовок `Authorization: Bearer $sign`, который формируется следующим образом:\nхеш SHA-256 из `Тело запроса + приватный API ключ`, например\n```php\n$walletPrivateKey = '65d860160bdc9b98abf72407e14ca40b609417de7939897d3b58d55787aaef69';\n$data = [\n    'account' => '7926123xxxx',\n    'amount' => 100,\n    'currency_id' => 1,\n    'payment_system_id' => 5,\n    'description' => 'Order #1',\n    'fee_from_balance' => 1,\n    'fields' => [\n        'bank_id' => 1,\n    ],\n];\n$sign = hash('sha256', json_encode($data).$walletPrivateKey);\n\n$ch = curl_init('https://api.fkwallet.io/v1/');\ncurl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', \"Authorization: Bearer $sign\" ]);\ncurl_setopt($ch, CURLOPT_RETURNTRANSFER, true);\ncurl_setopt($ch, CURLOPT_POST, 1);\ncurl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));\n$result = curl_exec($ch);\ncurl_close($ch);\necho json_decode($result);\n```\nЕсли тело запроса пустое (для большинства GET запросов), в качестве $sign используется просто захешированный приватный API ключ\n```php\n$walletPrivateKey = '65d860160bdc9b98abf72407e14ca40b609417de7939897d3b58d55787aaef69';\n$sign = hash('sha256', $walletPrivateKey)\n\n$ch = curl_init('https://api.fkwallet.io/v1/history');\ncurl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', \"Authorization: Bearer $sign\" ]);\ncurl_setopt($ch, CURLOPT_RETURNTRANSFER, true);\n$result = curl_exec($ch);\ncurl_close($ch);\necho json_decode($result);\n```\n\n#### Статусы выводов\n| Статус | Описание |\n| --- | --- |\n| 0 | Новый |\n| 1 | Выполнен |\n| 2 | В обработке |\n| 3 | В обработке |\n| 4 | В обработке |\n| 5 | В процессе |\n| 8 | Ошибка |\n| 9 | Отменен |\n| 10 | Ошибка |\n| 11 | В обработке |\n\n#### Статусы переводов\n| Статус | Описание |\n| --- | --- |\n| 0 | Новый |\n| 1 | Выполнен |\n| 2 | В обработке |\n| 8 | Ошибка |\n| 9 | Отменен |\n#### Уведомление\n\nВы можете настроить получение уведомлений (в формате form-data) при изменении статуса вывода, для этого укажите в личном кабинете, в настройках API ключа, ссылку на страницу обработки уведомления.\n\nРекомендуем так же проверять IP сервера отправляющего Вам информацию, наши IP - 168.119.157.136, 168.119.60.227, 178.154.197.79, 51.250.54.238\n\nУведомление содержит следующие параметры\n| Параметр | Описание |\n| --- | --- |\n| id | Наш номер операции |\n| order_id | Ваш номер операции |\n| currency_id | ID валюты |\n| payment_system_id | ID платежной системы |\n| description | Описание |\n| status | Статус вывода |\n| amount | Сумма |\n| fee | Комиссия |\n| account | Аккаунт |\n\nВ целях безопасности, в каждый запрос добавляется поле sign, которое содержит отсортированные по ключам в алфавитном порядке значения из уведомления и объединенные символом `|`. Затем эта строка хешируется SHA-256\n```php\n$walletPrivateKey = '65d860160bdc9b98abf72407e14ca40b609417de7939897d3b58d55787aaef69';\n$request = $_POST;\nunset($request['sign']);\nksort($request);\n$sign = hash('sha256', implode('|', $request) . $walletPrivateKey);\n\nif ($sign !== $_POST['sign']) {\n    echo 'Wrong sign';\n    die();\n}\n//Подпись запроса верна, продолжаем обработку\n//...\n```\n            ",
+        "version": "0.1"
+    },
+    "paths": {
+        "/{public_key}/balance": {
+            "get": {
+                "summary": "Получение баланса кошелька",
+                "parameters": [
+                    {
+                        "name": "public_key",
+                        "required": true,
+                        "in": "path",
+                        "schema": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "description",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "ok"
+                                                    ]
+                                                },
+                                                "data": {
+                                                    "properties": {
+                                                        "currency_code": {
+                                                            "type": "string",
+                                                            "nullable": false
+                                                        },
+                                                        "value": {
+                                                            "type": "number",
+                                                            "nullable": false
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "currency_code",
+                                                        "value"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{public_key}/history": {
+            "get": {
+                "summary": "История",
+                "parameters": [
+                    {
+                        "name": "public_key",
+                        "required": true,
+                        "in": "path",
+                        "schema": []
+                    },
+                    {
+                        "name": "date_from",
+                        "required": false,
+                        "description": "Дата от (yyyy-mm-dd)",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "required": false,
+                        "description": "Дата до (yyyy-mm-dd)",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "description": "Страница",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "required": false,
+                        "description": "Количество элементов на странице",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "description",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "ok"
+                                                    ]
+                                                },
+                                                "data": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "currency": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "currency_code": {
+                                                            "type": "string",
+                                                            "nullable": false
+                                                        },
+                                                        "amount": {
+                                                            "type": "number",
+                                                            "nullable": false
+                                                        },
+                                                        "date": {
+                                                            "type": "string",
+                                                            "nullable": false
+                                                        },
+                                                        "operation": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "operation_title": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "info": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "nullable": false
+                                                                },
+                                                                "amount": {
+                                                                    "type": "number",
+                                                                    "nullable": true
+                                                                },
+                                                                "amount_to": {
+                                                                    "type": "number",
+                                                                    "nullable": true
+                                                                },
+                                                                "fee": {
+                                                                    "type": "number",
+                                                                    "nullable": true
+                                                                },
+                                                                "account": {
+                                                                    "type": "string",
+                                                                    "nullable": true
+                                                                },
+                                                                "ext_payment_id": {
+                                                                    "type": "string",
+                                                                    "nullable": true
+                                                                },
+                                                                "status": {
+                                                                    "type": "string",
+                                                                    "nullable": true,
+                                                                    "enum": [
+                                                                        "in_process",
+                                                                        "success",
+                                                                        "error",
+                                                                        "cancel",
+                                                                        "refund"
+                                                                    ]
+                                                                },
+                                                                "status_title": {
+                                                                    "type": "string",
+                                                                    "nullable": true
+                                                                },
+                                                                "description": {
+                                                                    "type": "string",
+                                                                    "nullable": true
+                                                                },
+                                                                "currency_from_code": {
+                                                                    "type": "string",
+                                                                    "nullable": true
+                                                                },
+                                                                "currency_to_code": {
+                                                                    "type": "string",
+                                                                    "nullable": true
+                                                                },
+                                                                "course_currency": {
+                                                                    "type": "string",
+                                                                    "nullable": true
+                                                                },
+                                                                "course": {
+                                                                    "type": "number",
+                                                                    "nullable": true
+                                                                },
+                                                                "created_at": {
+                                                                    "type": "string",
+                                                                    "nullable": true
+                                                                },
+                                                                "completed_at": {
+                                                                    "type": "string",
+                                                                    "nullable": true
+                                                                },
+                                                                "user_order_id": {
+                                                                    "type": "string",
+                                                                    "nullable": true
+                                                                },
+                                                                "bank_name": {
+                                                                    "type": "string",
+                                                                    "nullable": true
+                                                                },
+                                                                "payment_system_id": {
+                                                                    "type": "integer",
+                                                                    "nullable": true
+                                                                },
+                                                                "sub_type": {
+                                                                    "type": "string",
+                                                                    "nullable": true
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "id"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "currency",
+                                                        "currency_code",
+                                                        "amount",
+                                                        "date",
+                                                        "info"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{public_key}/currencies": {
+            "get": {
+                "summary": "Валюты",
+                "parameters": [
+                    {
+                        "name": "public_key",
+                        "required": true,
+                        "in": "path",
+                        "schema": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "description",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "ok"
+                                                    ]
+                                                },
+                                                "data": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "code": {
+                                                            "type": "string",
+                                                            "nullable": false
+                                                        },
+                                                        "course": {
+                                                            "type": "number",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "code"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{public_key}/payment_systems": {
+            "get": {
+                "summary": "Платежные системы",
+                "parameters": [
+                    {
+                        "name": "public_key",
+                        "required": true,
+                        "in": "path",
+                        "schema": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "description",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "ok"
+                                                    ]
+                                                },
+                                                "data": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "code": {
+                                                            "type": "string",
+                                                            "nullable": false
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "code"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{public_key}/sbp_list": {
+            "get": {
+                "summary": "Список банков для SBP",
+                "parameters": [
+                    {
+                        "name": "public_key",
+                        "required": true,
+                        "in": "path",
+                        "schema": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "description",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "ok"
+                                                    ]
+                                                },
+                                                "data": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "nullable": false
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "nullable": false
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "name"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{public_key}/mobile_carrier_list": {
+            "get": {
+                "summary": "Список мобильных операторов",
+                "parameters": [
+                    {
+                        "name": "public_key",
+                        "required": true,
+                        "in": "path",
+                        "schema": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "description",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "ok"
+                                                    ]
+                                                },
+                                                "data": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "nullable": false
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "name"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{public_key}/withdrawal": {
+            "post": {
+                "summary": "Вывод",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "amount": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "currency_id": {
+                                        "type": "integer"
+                                    },
+                                    "payment_system_id": {
+                                        "type": "integer"
+                                    },
+                                    "fee_from_balance": {
+                                        "type": "integer"
+                                    },
+                                    "account": {
+                                        "type": "string",
+                                        "maxLength": 200,
+                                        "minLength": 4
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 200,
+                                        "minLength": 3
+                                    },
+                                    "order_id": {
+                                        "type": "integer"
+                                    },
+                                    "fields": {
+                                        "type": "array"
+                                    },
+                                    "idempotence_key": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "amount",
+                                    "currency_id",
+                                    "payment_system_id",
+                                    "fee_from_balance",
+                                    "account",
+                                    "idempotence_key"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "public_key",
+                        "required": true,
+                        "in": "path",
+                        "schema": []
+                    },
+                    {
+                        "name": "amount",
+                        "required": true,
+                        "description": "Сумма",
+                        "in": "query",
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "currency_id",
+                        "required": true,
+                        "description": "Валюта [Список](#get-/-public_key-/currencies)",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "payment_system_id",
+                        "required": true,
+                        "description": "Платежная система [Список](#get-/-public_key-/payment_systems)",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "fee_from_balance",
+                        "required": true,
+                        "description": "Комиссия с баланса или платежа (1 - комиссия списывается с баланса, 0 - комиссия списывается с платежа)",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "account",
+                        "required": true,
+                        "description": "Аккаунт",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "minLength": 4
+                        }
+                    },
+                    {
+                        "name": "description",
+                        "required": false,
+                        "description": "Описание",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "nullable": true,
+                            "maxLength": 200,
+                            "minLength": 3
+                        }
+                    },
+                    {
+                        "name": "order_id",
+                        "required": false,
+                        "description": "Номер заказа",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "required": false,
+                        "description": "Дополнительные параметры (sbp_bank_id - [ID банка для СБП](#get-/-public_key-/sbp_list), mobile_carrier_id - [ID мобильного оператора](#get-/-public_key-/mobile_carrier_list))",
+                        "in": "query",
+                        "schema": {
+                            "type": "array"
+                        }
+                    },
+                    {
+                        "name": "idempotence_key",
+                        "required": true,
+                        "description": "Уникальный ключ запроса, например номер заказа",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "description",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "ok"
+                                                    ]
+                                                },
+                                                "data": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "status": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "status"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{public_key}/withdrawal/{order_id}": {
+            "get": {
+                "summary": "Статус вывода",
+                "parameters": [
+                    {
+                        "name": "public_key",
+                        "required": true,
+                        "in": "path",
+                        "schema": []
+                    },
+                    {
+                        "name": "order_id",
+                        "required": true,
+                        "in": "path",
+                        "schema": []
+                    },
+                    {
+                        "name": "type",
+                        "required": true,
+                        "description": "order_id - Ваш номер заказа, id - номер заказа в нашей системе",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "nullable": true,
+                            "enum": [
+                                "id",
+                                "order_id"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "description",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "ok"
+                                                    ]
+                                                },
+                                                "data": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "status": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "status"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{public_key}/transfer": {
+            "post": {
+                "summary": "Перевод на другой кошелек",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "to_wallet_id": {
+                                        "type": "integer"
+                                    },
+                                    "amount": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "currency_id": {
+                                        "type": "integer"
+                                    },
+                                    "fee_from_balance": {
+                                        "type": "integer"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 200,
+                                        "minLength": 4
+                                    },
+                                    "idempotence_key": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "to_wallet_id",
+                                    "amount",
+                                    "currency_id",
+                                    "fee_from_balance",
+                                    "idempotence_key"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "public_key",
+                        "required": true,
+                        "in": "path",
+                        "schema": []
+                    },
+                    {
+                        "name": "to_wallet_id",
+                        "required": true,
+                        "description": "Кошелек получателя",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "amount",
+                        "required": true,
+                        "description": "Сумма",
+                        "in": "query",
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "currency_id",
+                        "required": true,
+                        "description": "Валюта [Список](#get-/-public_key-/currencies)",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "fee_from_balance",
+                        "required": true,
+                        "description": "Комиссия с баланса или платежа (1 - комиссия списывается с баланса, 0 - комиссия списывается с платежа)",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "description",
+                        "required": false,
+                        "description": "Описание",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "nullable": true,
+                            "maxLength": 200,
+                            "minLength": 4
+                        }
+                    },
+                    {
+                        "name": "idempotence_key",
+                        "required": true,
+                        "description": "Уникальный ключ запроса, например номер заказа",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "description",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "ok"
+                                                    ]
+                                                },
+                                                "data": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "from_wallet_number": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "to_wallet_number": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "status": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "from_wallet_number",
+                                                        "to_wallet_number",
+                                                        "status"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{public_key}/transfer/{id}": {
+            "get": {
+                "summary": "Статус перевода",
+                "parameters": [
+                    {
+                        "name": "public_key",
+                        "required": true,
+                        "in": "path",
+                        "schema": []
+                    },
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "description",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "ok"
+                                                    ]
+                                                },
+                                                "data": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "from_wallet_number": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "to_wallet_number": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "status": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "from_wallet_number",
+                                                        "to_wallet_number",
+                                                        "status"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{public_key}/op/categories": {
+            "get": {
+                "summary": "Категории онлайн товаров",
+                "parameters": [
+                    {
+                        "name": "public_key",
+                        "required": true,
+                        "in": "path",
+                        "schema": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "description",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "ok"
+                                                    ]
+                                                },
+                                                "data": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "name_ru": {
+                                                            "type": "string",
+                                                            "nullable": false
+                                                        },
+                                                        "name_en": {
+                                                            "type": "string",
+                                                            "nullable": false
+                                                        },
+                                                        "description_ru": {
+                                                            "type": "string",
+                                                            "nullable": false
+                                                        },
+                                                        "description_en": {
+                                                            "type": "string",
+                                                            "nullable": false
+                                                        },
+                                                        "slug": {
+                                                            "type": "string",
+                                                            "nullable": false
+                                                        },
+                                                        "sort": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "parent_id": {
+                                                            "type": "integer",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "name_ru",
+                                                        "name_en",
+                                                        "description_ru",
+                                                        "description_en",
+                                                        "slug",
+                                                        "sort"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{public_key}/op/categories/{category_id}/products": {
+            "get": {
+                "summary": "Список онлайн товаров",
+                "parameters": [
+                    {
+                        "name": "public_key",
+                        "required": true,
+                        "in": "path",
+                        "schema": []
+                    },
+                    {
+                        "name": "category_id",
+                        "required": true,
+                        "in": "path",
+                        "schema": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "description",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "ok"
+                                                    ]
+                                                },
+                                                "data": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "name_ru": {
+                                                            "type": "string",
+                                                            "nullable": false
+                                                        },
+                                                        "name_en": {
+                                                            "type": "string",
+                                                            "nullable": false
+                                                        },
+                                                        "description_ru": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "description_en": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "help_description_ru": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "help_description_en": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "slug": {
+                                                            "type": "string",
+                                                            "nullable": false
+                                                        },
+                                                        "price": {
+                                                            "type": "number",
+                                                            "nullable": false
+                                                        },
+                                                        "currency": {
+                                                            "type": "string",
+                                                            "nullable": false
+                                                        },
+                                                        "sort": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "fields": {
+                                                            "type": "array",
+                                                            "nullable": false,
+                                                            "items": {
+                                                                "properties": {
+                                                                    "key": {
+                                                                        "type": "string",
+                                                                        "nullable": false
+                                                                    },
+                                                                    "placeholder": {
+                                                                        "type": "string",
+                                                                        "nullable": false
+                                                                    },
+                                                                    "values": {
+                                                                        "type": "array",
+                                                                        "nullable": true,
+                                                                        "items": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    },
+                                                                    "info": {
+                                                                        "type": "array",
+                                                                        "nullable": true,
+                                                                        "items": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "key",
+                                                                    "placeholder"
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "name_ru",
+                                                        "name_en",
+                                                        "slug",
+                                                        "price",
+                                                        "currency",
+                                                        "sort",
+                                                        "fields"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{public_key}/op/create": {
+            "post": {
+                "summary": "Создать заказ онлайн товара",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "online_product_id": {
+                                        "type": "integer"
+                                    },
+                                    "currency_id": {
+                                        "type": "integer"
+                                    },
+                                    "amount": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "fields": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "key": {
+                                                    "type": "string"
+                                                },
+                                                "value": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "idempotence_key": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "online_product_id",
+                                    "currency_id",
+                                    "idempotence_key"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "public_key",
+                        "required": true,
+                        "in": "path",
+                        "schema": []
+                    },
+                    {
+                        "name": "online_product_id",
+                        "required": true,
+                        "description": "id товара",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "currency_id",
+                        "required": true,
+                        "description": "Валюта [Список](#get-/-public_key-/currencies)",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "amount",
+                        "required": false,
+                        "description": "Сумма",
+                        "in": "query",
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "required": true,
+                        "description": "Дополнительные параметры (пример \"fields\":[{\"key\":\"Input1\",\"value\":\"@testValue\"}])",
+                        "in": "query",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "key": {
+                                        "type": "string"
+                                    },
+                                    "value": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "idempotence_key",
+                        "required": true,
+                        "description": "Уникальный ключ запроса, например номер заказа",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "description",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "ok"
+                                                    ]
+                                                },
+                                                "data": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "status": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "coupon_code": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "status"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{public_key}/op/status/{order_id}": {
+            "get": {
+                "summary": "Статус заказа онлайн товара",
+                "parameters": [
+                    {
+                        "name": "public_key",
+                        "required": true,
+                        "in": "path",
+                        "schema": []
+                    },
+                    {
+                        "name": "order_id",
+                        "required": true,
+                        "in": "path",
+                        "schema": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "description",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "ok"
+                                                    ]
+                                                },
+                                                "data": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "status": {
+                                                            "type": "integer",
+                                                            "nullable": false
+                                                        },
+                                                        "coupon_code": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "status"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
