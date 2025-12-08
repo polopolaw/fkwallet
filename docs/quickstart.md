@@ -74,11 +74,7 @@ $withdrawal = FKWallet::createWithdrawal($request);
 You can use a proxy server for requests:
 
 ```php
-// Option 1: Start with proxy()
 $balance = FKWallet::proxy('http://proxy.example.com:8080')->getBalance();
-
-// Option 2: Chain proxy() after method
-$balance = FKWallet::getBalance()->proxy('http://proxy.example.com:8080');
 ```
 
 ## Next Steps

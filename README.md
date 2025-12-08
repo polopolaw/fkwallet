@@ -4,48 +4,6 @@ Laravel package for integration with fkwallet.io API.
 
 ## Recent Changes
 
-### Proxy Support (Latest)
-
-The package now supports proxy configuration for HTTP requests. You can use proxies in two ways:
-
-```php
-// Option 1: Start with proxy()
-FKWallet::proxy('http://proxy.example.com:8080')->getBalance();
-
-// Option 2: Chain proxy() after method
-FKWallet::getBalance()->proxy('http://proxy.example.com:8080');
-```
-
-### API Changes
-
-- **Removed `public_key` parameter**: All methods now use `FKWALLET_PUBLIC_KEY` from configuration. You no longer need to pass public key as a parameter to methods.
-
-## Installation
-
-Install the package via Composer:
-
-```bash
-composer require polopolaw/fkwallet
-```
-
-## Configuration
-
-Publish the configuration file:
-
-```bash
-php artisan vendor:publish --provider="Polopolaw\FKWallet\FKWalletServiceProvider" --tag="config"
-```
-
-Add the following to your `.env` file:
-
-```env
-FKWALLET_API_URL=https://api.fkwallet.io/v1/
-FKWALLET_PUBLIC_KEY=your_public_key_here
-FKWALLET_PRIVATE_KEY=your_private_key_here
-FKWALLET_TIMEOUT=30
-FKWALLET_RETRY_ATTEMPTS=3
-```
-
 ## Quick Start
 
 ### Using Facade
@@ -87,6 +45,32 @@ use Polopolaw\FKWallet\Contracts\FKWalletServiceInterface;
 $service = app(FKWalletServiceInterface::class);
 $balance = $service->getBalance();
 ```
+## Installation
+
+Install the package via Composer:
+
+```bash
+composer require polopolaw/fkwallet
+```
+
+## Configuration
+
+Publish the configuration file:
+
+```bash
+php artisan vendor:publish --provider="Polopolaw\FKWallet\FKWalletServiceProvider" --tag="config"
+```
+
+Add the following to your `.env` file:
+
+```env
+FKWALLET_API_URL=https://api.fkwallet.io/v1/
+FKWALLET_PUBLIC_KEY=your_public_key_here
+FKWALLET_PRIVATE_KEY=your_private_key_here
+FKWALLET_TIMEOUT=30
+FKWALLET_RETRY_ATTEMPTS=3
+```
+
 
 ## Available Methods
 
@@ -126,7 +110,7 @@ FKWallet::getBalance()->proxy('http://proxy.example.com:8080');
 
 ## Documentation
 
-For detailed documentation, see the [docs](docs/) directory.
+For detailed documentation, see the [docs](docs) directory.
 
 To generate Docusaurus documentation:
 

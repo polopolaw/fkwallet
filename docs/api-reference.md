@@ -24,8 +24,6 @@ $balance = FKWallet::getBalance();
 **With proxy:**
 ```php
 $balance = FKWallet::proxy('http://proxy.example.com:8080')->getBalance();
-// or
-$balance = FKWallet::getBalance()->proxy('http://proxy.example.com:8080');
 ```
 
 ---
