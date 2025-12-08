@@ -92,18 +92,6 @@ FKWALLET_RETRY_ATTEMPTS=3
 - `createTransfer(TransferRequest $request)` - Create transfer
 - `createOnlineOrder(OnlineOrderRequest $request)` - Create online order
 
-### Proxy Support
-
-All methods support proxy configuration:
-
-```php
-// Using proxy() method
-FKWallet::proxy('http://proxy.example.com:8080')->getBalance();
-
-// Chaining proxy() after method
-FKWallet::getBalance()->proxy('http://proxy.example.com:8080');
-```
-
 ## Documentation
 
 For detailed documentation, see the [docs](docs) directory.
