@@ -30,11 +30,7 @@ $withdrawal = FKWallet::createWithdrawal(new \Polopolaw\FKWallet\DTO\Requests\Wi
 You can specify a proxy for requests in two ways:
 
 ```php
-// Option 1: Start with proxy()
 $balance = FKWallet::proxy('http://proxy.example.com:8080')->getBalance();
-
-// Option 2: Chain proxy() after method call
-$balance = FKWallet::getBalance()->proxy('http://proxy.example.com:8080');
 ```
 
 ### Using Service
