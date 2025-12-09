@@ -26,6 +26,7 @@ use Polopolaw\FKWallet\Enums\OrderStatusType;
 interface FKWalletServiceInterface
 {
     public function proxy(string $proxy): static;
+    public function withCredentials(string $publicKey, string $privateKey): static;
     public function getBalance(): BalanceResponse;
 
     public function getHistory(

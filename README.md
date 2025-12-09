@@ -33,6 +33,14 @@ You can specify a proxy for requests in two ways:
 $balance = FKWallet::proxy('http://proxy.example.com:8080')->getBalance();
 ```
 
+### Using Custom Credentials
+
+Override configured keys at runtime:
+
+```php
+$balance = FKWallet::withCredentials('public_key', 'private_key')->getBalance();
+```
+
 ### Using Service
 
 ```php
@@ -70,7 +78,7 @@ FKWALLET_RETRY_ATTEMPTS=3
 
 ## Available Methods
 
-> **Note:** All methods use the `FKWALLET_PUBLIC_KEY` and `FKWALLET_PRIVATE_KEY` from your configuration file. You don't need to pass public key as a parameter.
+> **Note:** All methods use the `FKWALLET_PUBLIC_KEY` and `FKWALLET_PRIVATE_KEY` from your configuration file. Or you can pass as a parameter keys.
 
 ### GET Methods
 

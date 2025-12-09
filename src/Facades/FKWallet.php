@@ -27,6 +27,7 @@ use Polopolaw\FKWallet\Enums\OrderStatusType;
 
 /**
  * @method static FKWalletServiceInterface proxy(string $proxy)
+ * @method static FKWalletServiceInterface withCredentials(string $publicKey, string $privateKey)
  * @method static BalanceResponse getBalance()
  * @method static HistoryResponse getHistory(?string $dateFrom = null, ?string $dateTo = null, int $page = 1, int $limit = 10)
  * @method static array<CurrencyResponse> getCurrencies()

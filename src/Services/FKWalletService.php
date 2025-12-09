@@ -32,6 +32,8 @@ use Polopolaw\FKWallet\Http\Response;
 class FKWalletService implements FKWalletServiceInterface
 {
     private ?string $proxy = null;
+    private string $publicKey;
+    private string $privateKey;
 
     public function __construct(
         private readonly ClientInterface $client,
@@ -39,18 +41,29 @@ class FKWalletService implements FKWalletServiceInterface
         private readonly string $defaultPublicKey,
         private readonly string $defaultPrivateKey
     ) {
+        $this->publicKey = $defaultPublicKey;
+        $this->privateKey = $defaultPrivateKey;
     }
 
     public function proxy(string $proxy): static
     {
+        $this->proxy = $proxy;
         $this->client->setProxy($proxy);
+        return $this;
+    }
+
+    public function withCredentials(string $publicKey, string $privateKey): static
+    {
+        $this->publicKey = $publicKey;
+        $this->privateKey = $privateKey;
+
         return $this;
     }
 
     public function getBalance(): BalanceResponse
     {
-        $url = $this->buildUrl($this->defaultPublicKey, 'balance');
-        $signature = $this->generateSignature($this->defaultPublicKey, 'GET');
+        $url = $this->buildUrl($this->publicKey, 'balance');
+        $signature = $this->generateSignature($this->publicKey, 'GET');
         $response = $this->client->get($url, $this->buildHeaders($signature), $this->proxy);
         $data = $this->extractData($response);
 
@@ -63,7 +76,7 @@ class FKWalletService implements FKWalletServiceInterface
         int $page = 1,
         int $limit = 10
     ): HistoryResponse {
-        $url = $this->buildUrl($this->defaultPublicKey, 'history');
+        $url = $this->buildUrl($this->publicKey, 'history');
         $params = [];
         if ($dateFrom !== null) {
             $params['date_from'] = $dateFrom;
@@ -78,7 +91,7 @@ class FKWalletService implements FKWalletServiceInterface
             $url .= '?' . http_build_query($params);
         }
 
-        $signature = $this->generateSignature($this->defaultPublicKey, 'GET');
+        $signature = $this->generateSignature($this->publicKey, 'GET');
         $response = $this->client->get($url, $this->buildHeaders($signature), $this->proxy);
         $data = $this->extractData($response);
 
@@ -87,8 +100,8 @@ class FKWalletService implements FKWalletServiceInterface
 
     public function getCurrencies(): array
     {
-        $url = $this->buildUrl($this->defaultPublicKey, 'currencies');
-        $signature = $this->generateSignature($this->defaultPublicKey, 'GET');
+        $url = $this->buildUrl($this->publicKey, 'currencies');
+        $signature = $this->generateSignature($this->publicKey, 'GET');
         $response = $this->client->get($url, $this->buildHeaders($signature), $this->proxy);
         $data = $this->extractData($response);
 
@@ -102,8 +115,8 @@ class FKWalletService implements FKWalletServiceInterface
 
     public function getPaymentSystems(): array
     {
-        $url = $this->buildUrl($this->defaultPublicKey, 'payment_systems');
-        $signature = $this->generateSignature($this->defaultPublicKey, 'GET');
+        $url = $this->buildUrl($this->publicKey, 'payment_systems');
+        $signature = $this->generateSignature($this->publicKey, 'GET');
         $response = $this->client->get($url, $this->buildHeaders($signature), $this->proxy);
         $data = $this->extractData($response);
 
@@ -117,8 +130,8 @@ class FKWalletService implements FKWalletServiceInterface
 
     public function getSbpList(): array
     {
-        $url = $this->buildUrl($this->defaultPublicKey, 'sbp_list');
-        $signature = $this->generateSignature($this->defaultPublicKey, 'GET');
+        $url = $this->buildUrl($this->publicKey, 'sbp_list');
+        $signature = $this->generateSignature($this->publicKey, 'GET');
         $response = $this->client->get($url, $this->buildHeaders($signature), $this->proxy);
         $data = $this->extractData($response);
 
@@ -132,8 +145,8 @@ class FKWalletService implements FKWalletServiceInterface
 
     public function getMobileCarrierList(): array
     {
-        $url = $this->buildUrl($this->defaultPublicKey, 'mobile_carrier_list');
-        $signature = $this->generateSignature($this->defaultPublicKey, 'GET');
+        $url = $this->buildUrl($this->publicKey, 'mobile_carrier_list');
+        $signature = $this->generateSignature($this->publicKey, 'GET');
         $response = $this->client->get($url, $this->buildHeaders($signature), $this->proxy);
         $data = $this->extractData($response);
 
@@ -149,9 +162,9 @@ class FKWalletService implements FKWalletServiceInterface
         int|string $orderId,
         OrderStatusType $type = OrderStatusType::ORDER_ID
     ): WithdrawalStatusResponse {
-        $url = $this->buildUrl($this->defaultPublicKey, "withdrawal/{$orderId}");
+        $url = $this->buildUrl($this->publicKey, "withdrawal/{$orderId}");
         $url .= '?type=' . $type->value;
-        $signature = $this->generateSignature($this->defaultPublicKey, 'GET');
+        $signature = $this->generateSignature($this->publicKey, 'GET');
         $response = $this->client->get($url, $this->buildHeaders($signature), $this->proxy);
         $data = $this->extractData($response);
 
@@ -160,8 +173,8 @@ class FKWalletService implements FKWalletServiceInterface
 
     public function getTransferStatus(int|string $id): TransferStatusResponse
     {
-        $url = $this->buildUrl($this->defaultPublicKey, "transfer/{$id}");
-        $signature = $this->generateSignature($this->defaultPublicKey, 'GET');
+        $url = $this->buildUrl($this->publicKey, "transfer/{$id}");
+        $signature = $this->generateSignature($this->publicKey, 'GET');
         $response = $this->client->get($url, $this->buildHeaders($signature), $this->proxy);
         $data = $this->extractData($response);
 
@@ -170,8 +183,8 @@ class FKWalletService implements FKWalletServiceInterface
 
     public function getOnlineProductCategories(): array
     {
-        $url = $this->buildUrl($this->defaultPublicKey, 'op/categories');
-        $signature = $this->generateSignature($this->defaultPublicKey, 'GET');
+        $url = $this->buildUrl($this->publicKey, 'op/categories');
+        $signature = $this->generateSignature($this->publicKey, 'GET');
         $response = $this->client->get($url, $this->buildHeaders($signature), $this->proxy);
         $data = $this->extractData($response);
 
@@ -185,8 +198,8 @@ class FKWalletService implements FKWalletServiceInterface
 
     public function getOnlineProducts(int $categoryId): array
     {
-        $url = $this->buildUrl($this->defaultPublicKey, "op/categories/{$categoryId}/products");
-        $signature = $this->generateSignature($this->defaultPublicKey, 'GET');
+        $url = $this->buildUrl($this->publicKey, "op/categories/{$categoryId}/products");
+        $signature = $this->generateSignature($this->publicKey, 'GET');
         $response = $this->client->get($url, $this->buildHeaders($signature), $this->proxy);
         $data = $this->extractData($response);
 
@@ -200,8 +213,8 @@ class FKWalletService implements FKWalletServiceInterface
 
     public function getOnlineOrderStatus(int $orderId): OnlineOrderStatusResponse
     {
-        $url = $this->buildUrl($this->defaultPublicKey, "op/status/{$orderId}");
-        $signature = $this->generateSignature($this->defaultPublicKey, 'GET');
+        $url = $this->buildUrl($this->publicKey, "op/status/{$orderId}");
+        $signature = $this->generateSignature($this->publicKey, 'GET');
         $response = $this->client->get($url, $this->buildHeaders($signature), $this->proxy);
         $data = $this->extractData($response);
 
@@ -210,9 +223,9 @@ class FKWalletService implements FKWalletServiceInterface
 
     public function createWithdrawal(WithdrawalRequest $request): WithdrawalResponse
     {
-        $url = $this->buildUrl($this->defaultPublicKey, 'withdrawal');
+        $url = $this->buildUrl($this->publicKey, 'withdrawal');
         $payload = $request->toArray();
-        $signature = $this->generateSignature($this->defaultPublicKey, 'POST', $payload);
+        $signature = $this->generateSignature($this->publicKey, 'POST', $payload);
         $response = $this->client->post($url, $payload, $this->buildHeaders($signature), $this->proxy);
         $data = $this->extractData($response);
 
@@ -221,14 +234,14 @@ class FKWalletService implements FKWalletServiceInterface
 
     public function createTransfer(TransferRequest $request): TransferResponse
     {
-        $url = $this->buildUrl($this->defaultPublicKey, 'transfer');
+        $url = $this->buildUrl($this->publicKey, 'transfer');
         $queryParams = $request->toArray();
         
         if (!empty($queryParams)) {
             $url .= '?' . http_build_query($queryParams);
         }
         
-        $signature = $this->generateSignature($this->defaultPublicKey, 'POST', $queryParams);
+        $signature = $this->generateSignature($this->publicKey, 'POST', $queryParams);
         $response = $this->client->post($url, [], $this->buildHeaders($signature), $this->proxy);
         $data = $this->extractData($response);
 
@@ -237,9 +250,9 @@ class FKWalletService implements FKWalletServiceInterface
 
     public function createOnlineOrder(OnlineOrderRequest $request): OnlineOrderResponse
     {
-        $url = $this->buildUrl($this->defaultPublicKey, 'op/create');
+        $url = $this->buildUrl($this->publicKey, 'op/create');
         $payload = $request->toArray();
-        $signature = $this->generateSignature($this->defaultPublicKey, 'POST', $payload);
+        $signature = $this->generateSignature($this->publicKey, 'POST', $payload);
         $response = $this->client->post($url, $payload, $this->buildHeaders($signature), $this->proxy);
         $data = $this->extractData($response);
 
@@ -265,11 +278,15 @@ class FKWalletService implements FKWalletServiceInterface
 
     private function getPrivateKeyForPublicKey(string $publicKey): string
     {
+        if ($publicKey === $this->publicKey) {
+            return $this->privateKey;
+        }
+
         if ($publicKey === $this->defaultPublicKey) {
             return $this->defaultPrivateKey;
         }
 
-        return $this->defaultPrivateKey;
+        return $this->privateKey;
     }
 
     private function buildHeaders(string $signature): array

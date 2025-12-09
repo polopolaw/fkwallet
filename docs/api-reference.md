@@ -233,12 +233,15 @@ FKWallet::proxy('http://proxy.example.com:8080')->getBalance();
 FKWallet::proxy('http://proxy.example.com:8080')->createWithdrawal($request);
 ```
 
-### Option 2: Chain proxy() after method
+Both approaches are equivalent and will use the specified proxy for the HTTP request.
+
+## Runtime Credentials
+
+You can override the configured API keys on the fly using `withCredentials()`:
 
 ```php
-FKWallet::getBalance()->proxy('http://proxy.example.com:8080');
-FKWallet::createWithdrawal($request)->proxy('http://proxy.example.com:8080');
+FKWallet::withCredentials('public_key', 'private_key')->getBalance();
 ```
 
-Both approaches are equivalent and will use the specified proxy for the HTTP request.
+This works the same way as `proxy()`, allowing you to chain it before or after any call.
 
