@@ -2,8 +2,6 @@
 
 Laravel package for integration with fkwallet.io API.
 
-## Recent Changes
-
 ## Quick Start
 
 ### Using Facade
